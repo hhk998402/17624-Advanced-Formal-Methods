@@ -1,5 +1,69 @@
 ---------------------------- MODULE SimpleInput ----------------------------
-EXTENDS FiniteSets, Naturals
+EXTENDS FiniteSets, Naturals, Sequences
+
+Users == {
+    [
+        username |-> "u1",
+        userId |-> 1
+    ],
+    [
+        username |-> "u2",
+        userId |-> 2
+    ],
+    [
+        username |-> "u3",
+        userId |-> 3
+    ],
+    [
+        username |-> "u3",
+        userId |-> 4
+    ],
+    [
+        username |-> "u4",
+        userId |-> 5
+    ],
+    [
+        username |-> "u5",
+        userId |-> 5
+    ],
+    [
+        username |-> "u6",
+        userId |-> 6
+    ],
+    [
+        username |-> "u7",
+        userId |-> 7
+    ],
+    [
+        username |-> "u8",
+        userId |-> 8
+    ]
+}
+
+Miners == {
+    [
+        username |-> "u1",
+        userId |-> 1
+    ],
+    [
+        username |-> "u2",
+        userId |-> 2
+    ],
+    [
+        username |-> "u3",
+        userId |-> 3
+    ],
+    [
+        username |-> "u4",
+        userId |-> 5
+    ],
+    [
+        username |-> "u5",
+        userId |-> 5
+    ]
+}
+
+Amounts == 1..10
 
 TransactionList == <<
     [
@@ -56,5 +120,5 @@ TransactionList == <<
 
 =============================================================================
 \* Modification History
-\* Last modified Thu Dec 01 19 |->10 |->54 EST 2022 by Dennis
+\* Last modified Fri Dec 02 01:24:38 EST 2022 by Dennis
 \* Created Thu Dec 01 17 |->59 |->06 EST 2022 by Dennis
