@@ -48,7 +48,7 @@ ReduceSet(op(_,_), base, set) ==
 RangeSeq(seq) == { seq[i]: i \in 1..Len(seq) }
 
 (*************************************************************************)
-(* Convert Sequence Range to Set                                         *)
+(* Convert Sequence Range filtered by start and end index to a Set       *)
 (*                                                                       *)
 (* Example:                                                              *)
 (*         RangeSeqSubset(<<'a', 'b', 'c', 'd'>>, 2, 3) = {'b', 'c'}     *)
