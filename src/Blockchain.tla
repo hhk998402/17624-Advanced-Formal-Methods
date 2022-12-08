@@ -3,6 +3,7 @@ EXTENDS SimpleInput, Randomization, FiniteSetsExt
 VARIABLE Unconfirmed_Transaction_Pool, BlockchainData, transaction_index, winner_count
 
 \* State structure
+
 Transaction == [
     payer: Users,
     payee: Users,
@@ -15,6 +16,10 @@ Block ==  [i \in 1..BLOCK_TRANSACTION_COUNT |-> Transaction]
 vars == <<Unconfirmed_Transaction_Pool, BlockchainData, transaction_index, winner_count>>
 
 \* Operations
+
+(*********************************************************************************)
+(* Operation that creates Next Transaction from the Transaction list constant    *)
+(*********************************************************************************)
 CreateNextTransaction ==
     /\ transaction_index <= Len(TransactionList)
     /\ Unconfirmed_Transaction_Pool' = Unconfirmed_Transaction_Pool \union {[
@@ -24,9 +29,24 @@ CreateNextTransaction ==
        ]}
     /\ transaction_index' = transaction_index + 1
     /\ UNCHANGED <<BlockchainData, winner_count>>
-    
-TransactionsInChain(miner_BlockchainData) == ReduceSet(LAMBDA x,y : x.block \union y, {}, RangeSeq(miner_BlockchainData))
 
+
+(********************************************************************************)
+(* Function to return the set of all transactions in a user's blockchain        *)
+(*                                                                              *)
+(* Example:                                                                     *)
+(*         TransactionsInChain(<< a(a1, a2), b(b1, b2) >>) =                    *)
+(*                                                  {a1, a2, b1, b2}            *)
+(* a,b refer to blocks in the blockchain                                        *)
+(* a1, a2 are transactions in block a and b1, b2 are transactions in block b    *)
+(********************************************************************************)
+TransactionsInChain(miner_blockchain) == ReduceSet(LAMBDA x,y : x.block \union y, {}, RangeSeq(miner_blockchain))
+
+(*********************************************************************************)
+(* Operation that lets the user create a block                                   *)
+(* Additionally, the ability of a user to win the lottery is controlled by       *)
+(* the winner_count variable to prevent scenario-space explosion                 *)
+(*********************************************************************************)
 CreateBlock(user) ==
     /\ winner_count <= TOTAL_WINNERS
     /\ winner_count + BLOCKCHAIN_LENGTH - Len(BlockchainData[user.userId]) <= TOTAL_WINNERS
@@ -42,10 +62,18 @@ CreateBlock(user) ==
     /\ winner_count' = winner_count + 1
     /\ UNCHANGED <<Unconfirmed_Transaction_Pool, transaction_index>>
 
+(*********************************************************************************)
+(* Operation that simulates a user winning the lottery of obtaining the hash     *)
+(* Chooses a miner at random                                                     *)
+(* the winner_count variable to prevent scenario-space explosion                 *)
+(*********************************************************************************)
 WinBlock(miner) ==
     /\ miner.userId = (CHOOSE x \in RandomSubset(1, 1..NUM_MINERS): TRUE) 
     /\ CreateBlock(miner)
 
+(*********************************************************************************)
+(* Operation that models a miner sending a mined block to other users            *)
+(*********************************************************************************)
 ReceiveBlockchainData(sender, receiver) ==
     /\ sender # receiver
     /\ Len(BlockchainData[sender.userId]) > Len(BlockchainData[receiver.userId])
@@ -55,6 +83,7 @@ ReceiveBlockchainData(sender, receiver) ==
     /\ UNCHANGED <<Unconfirmed_Transaction_Pool, transaction_index, winner_count>>
 
 \* Spec
+
 Init == 
     /\ Unconfirmed_Transaction_Pool = {}
     /\ BlockchainData = [i \in 1..NUM_USERS |-> << >> ]
@@ -75,22 +104,34 @@ Spec ==
     /\ Fairness
 
 \* Properties
+
+(*********************************************************************************)
+(* Property stating that all transactions in the transaction list get added      *)
+(* Note: The transactions must be an exact multiple of BLOCK_TRANSACTION_COUNT   *)
+(*********************************************************************************)
 TransactionsGetAdded == 
-\*    /\ <>(winner_count = 3) => <>(\A i,i2 \in 1..NUM_MINERS: BlockchainData[i] = BlockchainData[i2])
     /\ <>(\A i \in 1..NUM_MINERS: Len(BlockchainData[i]) = BLOCKCHAIN_LENGTH)
 
 
+(*********************************************************************************)
+(* Property stating that all miners reach a consensus on transaction history     *)
+(* Note: This ceases to hold if TOTAL_WINNERS > BLOCKCHAIN_LENGTH                *)
+(* Note: Restricted to miners to ensure quick execution                          *)
+(*********************************************************************************)
 MinersAgree == 
-    /\ <>[](\A blockchain_a, blockchain_b \in RangeSeqSubset(BlockchainData, NUM_MINERS): blockchain_a = blockchain_b)
-\*    /\ <>[](BlockchainData[1] = BlockchainData[2] /\ BlockchainData[2] = BlockchainData[3])
-\*    /\ [][winner_count <= 2]_<<Unconfirmed_Transaction_Pool, BlockchainData, transaction_index>>
+    /\ <>[](\A blockchain_a, blockchain_b \in RangeSeqSubset(BlockchainData, 1, NUM_MINERS): blockchain_a = blockchain_b)
 
+(*********************************************************************************)
+(* Property stating that all miners will agree on chains upto a point            *)
+(* This length is effectively 2*BLOCKCHAIN_LENGTH - TOTAL_WINNERS                *)
+(* Note: Restricted to miners to ensure quick execution                          *)
+(*********************************************************************************)
 MinersAgreeOnOlderChain == 
-    /\ <>[](\A blockchain_a, blockchain_b \in RangeSeqSubset(BlockchainData, NUM_MINERS): 
+    /\ <>[](\A blockchain_a, blockchain_b \in RangeSeqSubset(BlockchainData, 1, NUM_MINERS): 
         1..CONSENSUS_LENGTH \subseteq (DOMAIN blockchain_a \intersect DOMAIN blockchain_b)
         => SubSeq(blockchain_a, 1, CONSENSUS_LENGTH) = SubSeq(blockchain_b, 1, CONSENSUS_LENGTH))
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Dec 07 18:01:46 EST 2022 by Dennis
+\* Last modified Wed Dec 07 22:15:00 EST 2022 by Dennis
 \* Created Thu Dec 01 17:55:14 EST 2022 by Dennis

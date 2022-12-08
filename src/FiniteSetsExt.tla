@@ -30,18 +30,30 @@ MapThenFoldSet(op(_,_), base, f(_), choose(_), S) ==
   IN  iter[S]
 
 
+(*************************************************************************)
+(* Fold op over the elements of set using base as starting value.        *)
+(*                                                                       *)
+(* Example:                                                              *)
+(*         ReduceSet(LAMBA x,y : x + y, 0, 0 .. 10) = 55                 *)
+(*************************************************************************)
 ReduceSet(op(_,_), base, set) ==
-   (*************************************************************************)
-   (* Fold op over the elements of set using base as starting value.        *)
-   (*                                                                       *)
-   (* Example:                                                              *)
-   (*         ReduceSet(LAMBA x,y : x + y, 0, 0 .. 10) = 55                   *)
-   (*************************************************************************)
    MapThenFoldSet(op, base, LAMBDA x : x, LAMBDA s : CHOOSE x \in s : TRUE, set)
 
-RangeSeq(seq) == {seq[i]: i \in 1..Len(seq)}
+(*************************************************************************)
+(* Convert Sequence Range to Set                                         *)
+(*                                                                       *)
+(* Example:                                                              *)
+(*         RangeSeq(<<'a', 'b'>>) = {'a', 'b'}                           *)
+(*************************************************************************)
+RangeSeq(seq) == { seq[i]: i \in 1..Len(seq) }
 
-RangeSeqSubset(seq, num) == {seq[i]: i \in 1..num}
+(*************************************************************************)
+(* Convert Sequence Range to Set                                         *)
+(*                                                                       *)
+(* Example:                                                              *)
+(*         RangeSeqSubset(<<'a', 'b', 'c', 'd'>>, 2, 3) = {'b', 'c'}     *)
+(*************************************************************************)
+RangeSeqSubset(seq, start, end) == { seq[i]: i \in start..end }
 =============================================================================
 \* Modification History
 \* Last modified Wed Dec 07 15:20:01 EST 2022 by Dennis
