@@ -40,7 +40,9 @@ ReduceSet(op(_,_), base, set) ==
    MapThenFoldSet(op, base, LAMBDA x : x, LAMBDA s : CHOOSE x \in s : TRUE, set)
 
 RangeSeq(seq) == {seq[i]: i \in 1..Len(seq)}
+
+RangeSeqSubset(seq, num) == {seq[i]: i \in 1..num}
 =============================================================================
 \* Modification History
-\* Last modified Fri Dec 02 01:17:48 EST 2022 by Dennis
+\* Last modified Wed Dec 07 15:20:01 EST 2022 by Dennis
 \* Created Fri Dec 02 00:36:27 EST 2022 by Dennis
