@@ -1,5 +1,5 @@
------------------------------ MODULE Blockchain -----------------------------
-EXTENDS SimpleInput, Randomization, FiniteSetsExt
+----------------------------- MODULE BlockchainFinal -----------------------------
+EXTENDS SimpleInput, Randomization, FiniteSetsExt, ConsensusLengthExt
 VARIABLE Unconfirmed_Transaction_Pool, BlockchainData, transaction_index, winner_count
 
 \* State structure
@@ -48,8 +48,6 @@ TransactionsInChain(miner_blockchain) == ReduceSet(LAMBDA x,y : x.block \union y
 (* the winner_count variable to prevent scenario-space explosion                 *)
 (*********************************************************************************)
 CreateBlock(user) ==
-    /\ winner_count <= TOTAL_WINNERS
-    /\ winner_count + BLOCKCHAIN_LENGTH - Len(BlockchainData[user.userId]) <= TOTAL_WINNERS
     /\ Cardinality(Unconfirmed_Transaction_Pool \ TransactionsInChain(BlockchainData[user.userId])) >= BLOCK_TRANSACTION_COUNT
     /\ BlockchainData' = [BlockchainData EXCEPT
            ![user.userId] = Append(
@@ -59,8 +57,7 @@ CreateBlock(user) ==
                    block |-> RandomSubset(BLOCK_TRANSACTION_COUNT, Unconfirmed_Transaction_Pool \ TransactionsInChain(BlockchainData[user.userId]))
                ]
        )]
-    /\ winner_count' = winner_count + 1
-    /\ UNCHANGED <<Unconfirmed_Transaction_Pool, transaction_index>>
+    /\ UNCHANGED <<Unconfirmed_Transaction_Pool, transaction_index, winner_count>>
 
 (*********************************************************************************)
 (* Operation that simulates a user winning the lottery of obtaining the hash     *)
@@ -112,27 +109,19 @@ Spec ==
 TransactionsGetAdded == 
     /\ <>(\A i \in 1..NUM_MINERS: Len(BlockchainData[i]) = BLOCKCHAIN_LENGTH)
 
-
 (*********************************************************************************)
-(* Property stating that all miners finally reach a consensus                    *)
-(* on transaction history                                                        *)
-(* Note: This ceases to hold if TOTAL_WINNERS > BLOCKCHAIN_LENGTH                *)
-(* Note: Restricted to miners to ensure quick execution                          *)
-(*********************************************************************************)
-MinersAgree == 
-    /\ <>[](\A blockchain_a, blockchain_b \in RangeSeqSubset(BlockchainData, 1, NUM_MINERS): blockchain_a = blockchain_b)
-
-(*********************************************************************************)
-(* Property stating that all miners will finally agree on chains upto a point    *)
+(* Property stating that all miners will always agree on chains upto the         *)
+(* calculated consensus point                                                    *)
 (* This length is effectively 2*BLOCKCHAIN_LENGTH - TOTAL_WINNERS                *)
 (* Note: Restricted to miners to ensure quick execution                          *)
 (*********************************************************************************)
-MinersAgreeOnOlderChain == 
-    /\ <>[](\A blockchain_a, blockchain_b \in RangeSeqSubset(BlockchainData, 1, NUM_MINERS): 
-        1..CONSENSUS_LENGTH \subseteq (DOMAIN blockchain_a \intersect DOMAIN blockchain_b)
-        => SubSeq(blockchain_a, 1, CONSENSUS_LENGTH) = SubSeq(blockchain_b, 1, CONSENSUS_LENGTH))
+MinersAgreeUptoConsensusLength == 
+    LET cLength == ConsensusLength(BlockchainData, NUM_MINERS)
+    IN [](\A blockchain_a, blockchain_b \in RangeSeqSubset(BlockchainData, 1, NUM_MINERS): 
+        1..cLength \subseteq (DOMAIN blockchain_a \intersect DOMAIN blockchain_b)
+        => SubSeq(blockchain_a, 1, cLength) = SubSeq(blockchain_b, 1, cLength))
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Dec 07 22:15:00 EST 2022 by Dennis
+\* Last modified Sun Dec 11 19:58:04 EST 2022 by Dennis
 \* Created Thu Dec 01 17:55:14 EST 2022 by Dennis

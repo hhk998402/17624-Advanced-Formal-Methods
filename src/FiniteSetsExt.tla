@@ -10,12 +10,8 @@ MapThenFoldSet(op(_,_), base, f(_), choose(_), S) ==
 (* op should be associative and commutative. Otherwise, the result may depend *)
 (* on the concrete implementation of `choose`.                                *)
 (*                                                                            *)
-(* FoldSet, a simpler version for sets is contained in FiniteSetsEx.          *)
-(* FoldFunction, a simpler version for functions is contained in Functions.   *)
-(* FoldSequence, a simpler version for sequences is contained in SequencesExt.*)
 (*                                                                            *)
 (* Example:                                                                   *)
-(*                                                                            *)
 (*  MapThenFoldSet(LAMBDA x,y: x \cup y,                                      *)
 (*                 {},                                                        *)
 (*                 LAMBDA x: {{x}},                                           *)
@@ -54,7 +50,18 @@ RangeSeq(seq) == { seq[i]: i \in 1..Len(seq) }
 (*         RangeSeqSubset(<<'a', 'b', 'c', 'd'>>, 2, 3) = {'b', 'c'}     *)
 (*************************************************************************)
 RangeSeqSubset(seq, start, end) == { seq[i]: i \in start..end }
+
+
+(*************************************************************************)
+(* Find maximum/minimum in the set provided                              *)
+(*                                                                       *)
+(* Example:                                                              *)
+(*         SetMax({1,3,5}) = 5                                           *)
+(*         SetMin({1,3,5}) = 1                                           *)
+(*************************************************************************)
+SetMax (S) == IF Cardinality(S) = 0 THEN 0 ELSE CHOOSE t \in S : \A s \in S : t >= s
+SetMin (S) == IF Cardinality(S) = 0 THEN 0 ELSE CHOOSE t \in S : \A s \in S : t <= s
 =============================================================================
 \* Modification History
-\* Last modified Wed Dec 07 15:20:01 EST 2022 by Dennis
+\* Last modified Sun Dec 11 12:28:26 EST 2022 by Dennis
 \* Created Fri Dec 02 00:36:27 EST 2022 by Dennis
