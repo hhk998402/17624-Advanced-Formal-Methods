@@ -60,15 +60,6 @@ CreateBlock(user) ==
     /\ UNCHANGED <<Unconfirmed_Transaction_Pool, transaction_index, winner_count>>
 
 (*********************************************************************************)
-(* Operation that simulates a user winning the lottery of obtaining the hash     *)
-(* Chooses a miner at random                                                     *)
-(* the winner_count variable to prevent scenario-space explosion                 *)
-(*********************************************************************************)
-WinBlock(miner) ==
-    /\ miner.userId = (CHOOSE x \in RandomSubset(1, 1..NUM_MINERS): TRUE) 
-    /\ CreateBlock(miner)
-
-(*********************************************************************************)
 (* Operation that models a miner sending a mined block to other users            *)
 (*********************************************************************************)
 ReceiveBlockchainData(sender, receiver) ==
@@ -88,13 +79,13 @@ Init ==
     /\ winner_count = 0
 Next == 
     \/ CreateNextTransaction
-    \/ \E m \in Miners: WinBlock(m)
+    \/ \E m \in Miners: CreateBlock(m)
     \/ \E m1,m2 \in Miners: ReceiveBlockchainData(m1, m2)
+    \/ (transaction_index > Len(TransactionList) /\ UNCHANGED vars)
 Fairness == 
-    /\ WF_Unconfirmed_Transaction_Pool(CreateNextTransaction)
-    /\ \A m \in Miners: SF_BlockchainData(WinBlock(m))
-    /\ \A m \in Miners: SF_BlockchainData(CreateBlock(m))
-    /\ \A m1,m2 \in Miners: SF_BlockchainData(ReceiveBlockchainData(m1,m2))
+    /\ WF_<<Unconfirmed_Transaction_Pool, transaction_index>>(CreateNextTransaction)
+    /\ \A m \in Miners: WF_<<BlockchainData, winner_count>>(CreateBlock(m))
+    /\ \A m1,m2 \in Miners: WF_<<BlockchainData>>(ReceiveBlockchainData(m1,m2))
 Spec == 
     /\ Init 
     /\ [][Next]_vars 
